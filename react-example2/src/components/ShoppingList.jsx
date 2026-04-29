@@ -1,26 +1,55 @@
 // src/components/ShoppingList.jsx
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
 function ShoppingList() {
+  // application state — the confirmed list
   const [items, setItems] = useState(['Milk', 'Eggs', 'Bread']);
 
-  // ❌ WRONG — mutating state directly
-  // React sees the same array reference and skips the re-render
-  // The page never updates even though the array changed
+  // local state — working copy while the user is editing
+  // only pushed to application state on confirm
+  const [workingItems, setWorkingItems] = useState(['Milk', 'Eggs', 'Bread']);
+
+  // isFormDirty tracks whether the user has made any changes
+  const [isFormDirty, setIsFormDirty] = useState(false);
+
+  const inputRef = useRef(null);
+
   function addItemWrong() {
     items.push('Butter');
     setItems(items);
   }
 
-  // ✅ CORRECT — spread creates a brand new array
-  // React sees a new reference and triggers a re-render
-  function addItemCorrect() {
-    setItems([...items, 'Butter']);
+  function handleAddItem() {
+    const value = inputRef.current.value.trim();
+    if (!value) return;
+
+    // adds to working copy only — not application state
+    setWorkingItems([...workingItems, value]);
+
+    if (!isFormDirty) setIsFormDirty(true);
+
+    inputRef.current.value = '';
+    inputRef.current.focus();
   }
 
-  // resets back to the starting list
+  // confirm — pushes working copy to application state
+  function handleConfirm() {
+    setItems([...workingItems]);
+    setIsFormDirty(false);
+  }
+
+  // cancel — resets working copy back to application state
+  function handleCancel() {
+    setWorkingItems([...items]);
+    setIsFormDirty(false);
+    inputRef.current.value = '';
+  }
+
   function resetList() {
     setItems(['Milk', 'Eggs', 'Bread']);
+    setWorkingItems(['Milk', 'Eggs', 'Bread']);
+    setIsFormDirty(false);
+    inputRef.current.focus();
   }
 
   return (
@@ -30,24 +59,52 @@ function ShoppingList() {
       padding: '16px',
       marginBottom: '24px',
     }}>
-      <h2>Shopping List — Immutability</h2>
+      <h2>Shopping List — Local State & Confirm/Cancel</h2>
+      <p style={{ fontSize: '13px', color: '#888' }}>
+        Items added go into a working copy first. Confirm to save,
+        cancel to discard. The confirmed list is the application state.
+      </p>
 
-      <ul>
-        {items.map((item, index) => (
-          <li key={index}>{item}</li>
-        ))}
-      </ul>
+      {/* ternary — show empty message or the list */}
+      {workingItems.length === 0 ? (
+        <p style={{ color: '#888', fontStyle: 'italic' }}>
+          Your list is empty — add something!
+        </p>
+      ) : (
+        <ul>
+          {workingItems.map((item, index) => (
+            <li key={index}>{item}</li>
+          ))}
+        </ul>
+      )}
+
+      <input
+        ref={inputRef}
+        type="text"
+        placeholder="Add an item..."
+        style={{ marginRight: '8px', padding: '4px' }}
+      />
+      <button onClick={handleAddItem}>Add Item</button>
+
+      <br /><br />
+
+      {/* confirm/cancel only appear when the user has made changes */}
+      {isFormDirty && (
+        <div style={{ marginBottom: '8px' }}>
+          <button onClick={handleConfirm}>Confirm</button>
+          <button onClick={handleCancel} style={{ marginLeft: '8px' }}>
+            Cancel
+          </button>
+        </div>
+      )}
 
       <button onClick={addItemWrong}>Add Butter (Wrong)</button>
-      <button onClick={addItemCorrect} style={{ marginLeft: '8px' }}>
-        Add Butter (Correct)
-      </button>
       <button onClick={resetList} style={{ marginLeft: '8px' }}>
         Reset
       </button>
 
       <p style={{ fontSize: '13px', color: '#888' }}>
-        Try "Add Butter Wrong" first — notice nothing changes. Then try "Add Butter Correct".
+        Confirmed list (application state): {items.join(', ')}
       </p>
     </div>
   );
