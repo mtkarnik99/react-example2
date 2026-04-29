@@ -2,42 +2,54 @@
 import { useState, useRef } from 'react';
 
 function ShoppingList() {
+  // application state — the confirmed list
   const [items, setItems] = useState(['Milk', 'Eggs', 'Bread']);
 
-  // useRef — stores a reference to the input DOM node
-  // lets us read the input's value directly without onChange updating state
-  // changing inputRef.current does NOT trigger a re-render
+  // local state — working copy while the user is editing
+  // only pushed to application state on confirm
+  const [workingItems, setWorkingItems] = useState(['Milk', 'Eggs', 'Bread']);
+
+  // isFormDirty tracks whether the user has made any changes
+  const [isFormDirty, setIsFormDirty] = useState(false);
+
   const inputRef = useRef(null);
 
-  // ❌ WRONG — mutating state directly
-  // React sees the same array reference and skips the re-render
-  // the page never updates even though the array changed
   function addItemWrong() {
     items.push('Butter');
     setItems(items);
   }
 
   function handleAddItem() {
-    // read the input value directly from the DOM node via ref
     const value = inputRef.current.value.trim();
-
-    // guard against empty input
     if (!value) return;
 
-    // ✅ CORRECT — spread creates a brand new array
-    // React sees a new reference and triggers a re-render
-    setItems([...items, value]);
+    // adds to working copy only — not application state
+    setWorkingItems([...workingItems, value]);
 
-    // clear the input field and return focus to it after adding
+    if (!isFormDirty) setIsFormDirty(true);
+
     inputRef.current.value = '';
     inputRef.current.focus();
+  }
+
+  // confirm — pushes working copy to application state
+  function handleConfirm() {
+    setItems([...workingItems]);
+    setIsFormDirty(false);
+  }
+
+  // cancel — resets working copy back to application state
+  function handleCancel() {
+    setWorkingItems([...items]);
+    setIsFormDirty(false);
+    inputRef.current.value = '';
   }
 
   function resetList() {
     // resets back to the starting list
     setItems(['Milk', 'Eggs', 'Bread']);
-
-    // return focus to the input after reset
+    setWorkingItems(['Milk', 'Eggs', 'Bread']);
+    setIsFormDirty(false);
     inputRef.current.focus();
   }
 
@@ -48,17 +60,44 @@ function ShoppingList() {
       padding: '16px',
       marginBottom: '24px',
     }}>
-      <h2>Shopping List — useRef & Immutability</h2>
+      <h2>Shopping List — Local State & Confirm/Cancel</h2>
       <p style={{ fontSize: '13px', color: '#888' }}>
-        useRef reads the input value directly without re-rendering on every keystroke.
-        Notice focus returns to the input after adding or resetting.
+        Items added go into a working copy first. Confirm to save,
+        cancel to discard. The confirmed list is the application state.
       </p>
 
-      <ul>
-        {items.map((item, index) => (
-          <li key={index}>{item}</li>
-        ))}
-      </ul>
+      {/* ternary — show empty message or the list */}
+      {workingItems.length === 0 ? (
+        <p style={{ color: '#888', fontStyle: 'italic' }}>
+          Your list is empty — add something!
+        </p>
+      ) : (
+        <ul>
+          {workingItems.map((item, index) => (
+            <li key={index}>{item}</li>
+          ))}
+        </ul>
+      )}
+
+      <input
+        ref={inputRef}
+        type="text"
+        placeholder="Add an item..."
+        style={{ marginRight: '8px', padding: '4px' }}
+      />
+      <button onClick={handleAddItem}>Add Item</button>
+
+      <br /><br />
+
+      {/* confirm/cancel only appear when the user has made changes */}
+      {isFormDirty && (
+        <div style={{ marginBottom: '8px' }}>
+          <button onClick={handleConfirm}>Confirm</button>
+          <button onClick={handleCancel} style={{ marginLeft: '8px' }}>
+            Cancel
+          </button>
+        </div>
+      )}
 
       {/* ref is attached to the input — we can now access it via inputRef.current */}
       <input
@@ -80,8 +119,7 @@ function ShoppingList() {
       </button>
 
       <p style={{ fontSize: '13px', color: '#888' }}>
-        Try "Add Butter Wrong" first — notice nothing changes. Then type an item and click "Add Item".
-        Always reset between demos.
+        Confirmed list (application state): {items.join(', ')}
       </p>
     </div>
   );

@@ -1,13 +1,8 @@
 // src/components/StudentList.jsx
 import StudentCard from './StudentCard';
 
-// onSelectStudent is a handler prop passed down from App
-// it gets forwarded to each StudentCard
-function StudentList({ students, children, onSelectStudent }) {
+function StudentList({ students, children, onSelectStudent, selectedStudent }) {
   return (
-    // the list has its own onClick to demonstrate event bubbling
-    // if stopPropagation is removed from StudentCard, clicking a card
-    // will trigger this handler too
     <ul
       onClick={() => console.log('List clicked — this fires if bubbling is not stopped')}
       style={{ padding: 0 }}
@@ -17,19 +12,26 @@ function StudentList({ students, children, onSelectStudent }) {
         click from reaching the list's own onClick handler.
       </p>
 
-      {/* children renders first — guaranteed to appear at the top */}
       {children}
 
-      {students.map((student) => (
-        // onSelect is passed to each card as a handler prop
-        // when a card is clicked, it calls onSelectStudent with the student's name
-        <StudentCard
-          key={student.id}
-          name={student.name}
-          grade={student.grade}
-          onSelect={onSelectStudent}
-        />
-      ))}
+      {/* ternary — show empty message or the list of cards */}
+      {students.length === 0 ? (
+        <p style={{ color: '#888', fontStyle: 'italic' }}>
+          No students in the roster yet.
+        </p>
+      ) : (
+        students.map((student) => (
+          <StudentCard
+            key={student.id}
+            name={student.name}
+            grade={student.grade}
+            onSelect={onSelectStudent}
+            // isSelected — true only for the currently selected student
+            // conditional rendering in StudentCard depends on this value
+            isSelected={selectedStudent === student.name}
+          />
+        ))
+      )}
     </ul>
   );
 }
