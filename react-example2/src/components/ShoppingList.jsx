@@ -46,6 +46,7 @@ function ShoppingList() {
   }
 
   function resetList() {
+    // resets back to the starting list
     setItems(['Milk', 'Eggs', 'Bread']);
     setWorkingItems(['Milk', 'Eggs', 'Bread']);
     setIsFormDirty(false);
@@ -98,6 +99,20 @@ function ShoppingList() {
         </div>
       )}
 
+      {/* ref is attached to the input — we can now access it via inputRef.current */}
+      <input
+        ref={inputRef}
+        type="text"
+        placeholder="Add an item..."
+        style={{ marginRight: '8px', padding: '4px' }}
+      />
+
+      {/* handleAddItem reads from the ref and updates state the correct way */}
+      <button onClick={handleAddItem}>Add Item</button>
+
+      <br /><br />
+
+      {/* wrong way demo — still here to show why mutation is dangerous */}
       <button onClick={addItemWrong}>Add Butter (Wrong)</button>
       <button onClick={resetList} style={{ marginLeft: '8px' }}>
         Reset

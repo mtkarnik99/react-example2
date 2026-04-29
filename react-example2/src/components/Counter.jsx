@@ -25,11 +25,17 @@ function Counter() {
   }, [count]);
 
   function addTwoBroken() {
+    // ❌ BROKEN — both calls read the same value of count
+    // React batches them so only one update happens
+    // Result: count only goes up by 1, not 2
     setCount(count + 1);
     setCount(count + 1);
   }
 
   function addTwoFixed() {
+    // ✅ FIXED — each call receives the most current value
+    // React processes them in order: previous → previous + 1
+    // Result: count correctly goes up by 2
     setCount((previous) => previous + 1);
     setCount((previous) => previous + 1);
   }
@@ -79,6 +85,7 @@ function Counter() {
 
       <p>Count: <strong>{count}</strong></p>
 
+      {/* basic useState — adds 1 and triggers useEffect */}
       <button onClick={() => setCount(count + 1)}>Add 1</button>
       <button onClick={() => setCount(0)} style={{ marginLeft: '8px' }}>
         Reset
@@ -86,6 +93,7 @@ function Counter() {
 
       <br /><br />
 
+      {/* stale state demo */}
       <button onClick={addTwoBroken}>Add 2 (Broken)</button>
       <button onClick={addTwoFixed} style={{ marginLeft: '8px' }}>
         Add 2 (Fixed)
