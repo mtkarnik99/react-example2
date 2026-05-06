@@ -1,18 +1,15 @@
-// src/components/ShoppingList.jsx
+// src/components/features/ShoppingList.jsx
 import { useState, useRef } from 'react';
+import { useFormDirty } from '../../hooks/useFormDirty';
 
 function ShoppingList() {
-  // application state — the confirmed list
   const [items, setItems] = useState(['Milk', 'Eggs', 'Bread']);
-
-  // local state — working copy while the user is editing
-  // only pushed to application state on confirm
   const [workingItems, setWorkingItems] = useState(['Milk', 'Eggs', 'Bread']);
-
-  // isFormDirty tracks whether the user has made any changes
-  const [isFormDirty, setIsFormDirty] = useState(false);
-
   const inputRef = useRef(null);
+
+  // useFormDirty — same custom hook used in Counter
+  // this is the whole point of the custom hook — write once, use everywhere
+  const { isFormDirty, markDirty, markClean } = useFormDirty();
 
   function addItemWrong() {
     items.push('Butter');
@@ -22,34 +19,27 @@ function ShoppingList() {
   function handleAddItem() {
     const value = inputRef.current.value.trim();
     if (!value) return;
-
-    // adds to working copy only — not application state
     setWorkingItems([...workingItems, value]);
-
-    if (!isFormDirty) setIsFormDirty(true);
-
+    markDirty();
     inputRef.current.value = '';
     inputRef.current.focus();
   }
 
-  // confirm — pushes working copy to application state
   function handleConfirm() {
     setItems([...workingItems]);
-    setIsFormDirty(false);
+    markClean();
   }
 
-  // cancel — resets working copy back to application state
   function handleCancel() {
     setWorkingItems([...items]);
-    setIsFormDirty(false);
+    markClean();
     inputRef.current.value = '';
   }
 
   function resetList() {
-    // resets back to the starting list
     setItems(['Milk', 'Eggs', 'Bread']);
     setWorkingItems(['Milk', 'Eggs', 'Bread']);
-    setIsFormDirty(false);
+    markClean();
     inputRef.current.focus();
   }
 
@@ -60,13 +50,12 @@ function ShoppingList() {
       padding: '16px',
       marginBottom: '24px',
     }}>
-      <h2>Shopping List — Local State & Confirm/Cancel</h2>
+      <h2>Shopping List — Shared Custom Hook</h2>
       <p style={{ fontSize: '13px', color: '#888' }}>
-        Items added go into a working copy first. Confirm to save,
-        cancel to discard. The confirmed list is the application state.
+        useFormDirty is the same custom hook used in Counter —
+        same behavior, zero duplicated code.
       </p>
 
-      {/* ternary — show empty message or the list */}
       {workingItems.length === 0 ? (
         <p style={{ color: '#888', fontStyle: 'italic' }}>
           Your list is empty — add something!
@@ -89,7 +78,6 @@ function ShoppingList() {
 
       <br /><br />
 
-      {/* confirm/cancel only appear when the user has made changes */}
       {isFormDirty && (
         <div style={{ marginBottom: '8px' }}>
           <button onClick={handleConfirm}>Confirm</button>
@@ -99,20 +87,6 @@ function ShoppingList() {
         </div>
       )}
 
-      {/* ref is attached to the input — we can now access it via inputRef.current */}
-      <input
-        ref={inputRef}
-        type="text"
-        placeholder="Add an item..."
-        style={{ marginRight: '8px', padding: '4px' }}
-      />
-
-      {/* handleAddItem reads from the ref and updates state the correct way */}
-      <button onClick={handleAddItem}>Add Item</button>
-
-      <br /><br />
-
-      {/* wrong way demo — still here to show why mutation is dangerous */}
       <button onClick={addItemWrong}>Add Butter (Wrong)</button>
       <button onClick={resetList} style={{ marginLeft: '8px' }}>
         Reset
