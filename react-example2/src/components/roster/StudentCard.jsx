@@ -1,5 +1,8 @@
-// src/components/StudentCard.jsx
+// src/components/roster/StudentCard.jsx
+import StatusBadge from '../shared/StatusBadge';
 
+// StatusBadge is now a shared reusable component
+// StudentCard no longer contains the badge styling — it just uses the component
 function StudentCard({ name, grade, highlight = false, onSelect, isSelected = false }) {
   return (
     <li
@@ -14,7 +17,6 @@ function StudentCard({ name, grade, highlight = false, onSelect, isSelected = fa
         padding: '10px',
         marginBottom: '8px',
         listStyle: 'none',
-        // conditional styling — selected card gets a green background
         backgroundColor: highlight ? '#fffbea' : isSelected ? '#e8f5e9' : '#fff',
         cursor: 'pointer',
       }}
@@ -22,20 +24,10 @@ function StudentCard({ name, grade, highlight = false, onSelect, isSelected = fa
       <h3 style={{ margin: 0 }}>{name}</h3>
       <p style={{ margin: '4px 0 0' }}>Grade: {grade}</p>
 
-      {/* && operator — only renders the badge when isSelected is true */}
-      {isSelected && (
-        <span style={{
-          display: 'inline-block',
-          marginTop: '6px',
-          padding: '2px 8px',
-          backgroundColor: '#4caf50',
-          color: '#fff',
-          borderRadius: '4px',
-          fontSize: '12px',
-        }}>
-          ✓ Selected
-        </span>
-      )}
+      {/* StatusBadge is now a reusable shared component */}
+      {/* same component, different label and color could be used anywhere */}
+      {isSelected && <StatusBadge label="✓ Selected" color="#4caf50" />}
+      {highlight && <StatusBadge label="⭐ Featured" color="#f5a623" />}
     </li>
   );
 }
