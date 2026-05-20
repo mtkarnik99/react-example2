@@ -1,21 +1,22 @@
 // src/components/roster/StudentList.jsx
 import StudentCard from './StudentCard';
 
+// onSelectStudent must be a stable reference for React.memo on StudentCard to work
+// if the function changes every render, memo sees a new prop and re-renders anyway
+// that's why App wraps handleSelectStudent in useCallback before passing it down
 function StudentList({ students, children, onSelectStudent, selectedStudent }) {
   return (
     <ul
-      onClick={() => console.log('List clicked — this fires if bubbling is not stopped')}
+      onClick={() => console.log('List clicked — bubbling demo')}
       style={{ padding: 0 }}
     >
       <p style={{ fontSize: '13px', color: '#888' }}>
-        Click a card and check the console — stopPropagation prevents the
-        click from reaching the list's own onClick handler.
+        Open the console — with React.memo, cards only log "rendered"
+        when their own props change, not on every App re-render.
       </p>
 
-      {/* children renders first — featured card always appears at top */}
       {children}
 
-      {/* ternary — empty message or list of cards */}
       {students.length === 0 ? (
         <p style={{ color: '#888', fontStyle: 'italic' }}>
           No students in the roster yet.

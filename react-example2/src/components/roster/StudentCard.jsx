@@ -1,14 +1,25 @@
 // src/components/roster/StudentCard.jsx
+import { memo } from 'react';
 import StatusBadge from '../shared/StatusBadge';
 
-// StatusBadge is now a shared reusable component
-// StudentCard no longer contains the badge styling — it just uses the component
-function StudentCard({ name, grade, highlight = false, onSelect, isSelected = false }) {
+// NEW this week — wrapped with React.memo
+// React.memo skips re-rendering this component if its props haven't changed
+// without memo, every StudentCard re-renders whenever App state changes
+// even if name, grade, highlight, and isSelected are all identical
+// open the console — you'll see "StudentCard rendered" only when props change
+const StudentCard = memo(function StudentCard({
+  name,
+  grade,
+  highlight = false,
+  onSelect,
+  isSelected = false,
+}) {
+  console.log(`StudentCard rendered: ${name}`);
+
   return (
     <li
       onClick={(event) => {
         event.stopPropagation();
-        console.log('Card clicked — stopPropagation prevented bubbling to the list');
         onSelect(name);
       }}
       style={{
@@ -23,13 +34,10 @@ function StudentCard({ name, grade, highlight = false, onSelect, isSelected = fa
     >
       <h3 style={{ margin: 0 }}>{name}</h3>
       <p style={{ margin: '4px 0 0' }}>Grade: {grade}</p>
-
-      {/* StatusBadge is now a reusable shared component */}
-      {/* same component, different label and color could be used anywhere */}
       {isSelected && <StatusBadge label="✓ Selected" color="#4caf50" />}
       {highlight && <StatusBadge label="⭐ Featured" color="#f5a623" />}
     </li>
   );
-}
+});
 
 export default StudentCard;
