@@ -1,18 +1,29 @@
 // src/components/features/ShoppingList.jsx
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { useFormDirty } from '../../hooks/useFormDirty';
 
 function ShoppingList() {
-  const [items, setItems] = useState(['Milk', 'Eggs', 'Bread']);
-  const [workingItems, setWorkingItems] = useState(['Milk', 'Eggs', 'Bread']);
+  const [items, setItems] = useState(['Milk', 'Eggs', 'Bread', 'Butter', 'Apples']);
+  const [workingItems, setWorkingItems] = useState(['Milk', 'Eggs', 'Bread', 'Butter', 'Apples']);
+  const [searchQuery, setSearchQuery] = useState('');
   const inputRef = useRef(null);
-
-  // useFormDirty — same custom hook used in Counter
-  // this is the whole point of the custom hook — write once, use everywhere
   const { isFormDirty, markDirty, markClean } = useFormDirty();
 
+  // NEW this week — useMemo caches the filtered list
+  // without useMemo, filtering runs on every render
+  // with useMemo, it only re-runs when workingItems or searchQuery changes
+  // try typing in the search box — watch "Filtering list..." in the console
+  // then interact with something else — notice filtering does NOT re-run
+  const filteredItems = useMemo(() => {
+    console.log('Filtering list...');
+    if (!searchQuery) return workingItems;
+    return workingItems.filter((item) =>
+      item.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [workingItems, searchQuery]);
+
   function addItemWrong() {
-    items.push('Butter');
+    items.push('Chocolate');
     setItems(items);
   }
 
@@ -37,8 +48,9 @@ function ShoppingList() {
   }
 
   function resetList() {
-    setItems(['Milk', 'Eggs', 'Bread']);
-    setWorkingItems(['Milk', 'Eggs', 'Bread']);
+    setItems(['Milk', 'Eggs', 'Bread', 'Butter', 'Apples']);
+    setWorkingItems(['Milk', 'Eggs', 'Bread', 'Butter', 'Apples']);
+    setSearchQuery('');
     markClean();
     inputRef.current.focus();
   }
@@ -50,19 +62,29 @@ function ShoppingList() {
       padding: '16px',
       marginBottom: '24px',
     }}>
-      <h2>Shopping List — Shared Custom Hook</h2>
+      <h2>Shopping List — useMemo Filter</h2>
       <p style={{ fontSize: '13px', color: '#888' }}>
-        useFormDirty is the same custom hook used in Counter —
-        same behavior, zero duplicated code.
+        The filter is wrapped in useMemo — it only re-runs when the list
+        or search query changes. Open the console to see when it fires.
       </p>
 
-      {workingItems.length === 0 ? (
+      {/* search input — updates searchQuery which is a useMemo dependency */}
+      <input
+        type="text"
+        placeholder="Search items..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        style={{ marginBottom: '12px', padding: '4px', width: '200px' }}
+      />
+
+      {/* filteredItems comes from useMemo — cached until dependencies change */}
+      {filteredItems.length === 0 ? (
         <p style={{ color: '#888', fontStyle: 'italic' }}>
-          Your list is empty — add something!
+          No items match your search.
         </p>
       ) : (
         <ul>
-          {workingItems.map((item, index) => (
+          {filteredItems.map((item, index) => (
             <li key={index}>{item}</li>
           ))}
         </ul>
@@ -87,13 +109,13 @@ function ShoppingList() {
         </div>
       )}
 
-      <button onClick={addItemWrong}>Add Butter (Wrong)</button>
+      <button onClick={addItemWrong}>Add Chocolate (Wrong)</button>
       <button onClick={resetList} style={{ marginLeft: '8px' }}>
         Reset
       </button>
 
       <p style={{ fontSize: '13px', color: '#888' }}>
-        Confirmed list (application state): {items.join(', ')}
+        Confirmed list: {items.join(', ')}
       </p>
     </div>
   );

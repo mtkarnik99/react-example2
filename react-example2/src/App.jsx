@@ -1,10 +1,11 @@
 // src/App.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Counter from './components/features/Counter';
 import ShoppingList from './components/features/ShoppingList';
 import StudentCard from './components/roster/StudentCard';
 import StudentList from './components/roster/StudentList';
 import Dialog from './components/shared/Dialog';
+import PaginatedList from './components/features/PaginatedList';
 
 export default function App() {
   const [selectedStudent, setSelectedStudent] = useState(null);
@@ -27,10 +28,16 @@ export default function App() {
     return () => console.log('App unmounted — cleanup ran');
   }, []);
 
-  function handleSelectStudent(name) {
-    setSelectedStudent(selectedStudent === name ? null : name);
+  // NEW this week — wrapped in useCallback
+  // StudentCard is now wrapped in React.memo
+  // memo skips re-renders when props haven't changed
+  // BUT if handleSelectStudent is a new reference every render,
+  // memo sees a changed prop and re-renders anyway
+  // useCallback keeps the reference stable — memo can do its job
+  const handleSelectStudent = useCallback((name) => {
+    setSelectedStudent((prev) => prev === name ? null : name);
     console.log('Handler called in App — selected:', name);
-  }
+  }, []); // no dependencies — setSelectedStudent is stable by default
 
   return (
     <main style={{
@@ -39,25 +46,20 @@ export default function App() {
       padding: '24px',
       fontFamily: 'sans-serif',
     }}>
-      <h1>React Fundamentals — Week 8</h1>
+      <h1>React Fundamentals — Week 9</h1>
 
-      {/* Dialog — reusable component with kind prop and children */}
-      {/* kind controls color and icon — children controls content */}
-      {/* onDismiss is optional — only renders the button if passed */}
+      {/* Dialog — unchanged from last week */}
       {showDialog && (
         <Dialog kind={dialogKind} onDismiss={() => setShowDialog(false)}>
           <p>
-            This is a <strong>{dialogKind}</strong> dialog. The color and
-            icon are controlled by the kind prop. This content is passed
-            as children — the Dialog doesn't need to know what goes here.
+            This is a <strong>{dialogKind}</strong> dialog.
           </p>
         </Dialog>
       )}
 
-      {/* buttons to toggle dialog kind — shows reusability in action */}
       <div style={{ marginBottom: '24px' }}>
         <p style={{ fontSize: '13px', color: '#888', marginBottom: '8px' }}>
-          Toggle the Dialog kind to see the reusable component in action:
+          Toggle the Dialog kind:
         </p>
         {['info', 'success', 'warning', 'error'].map((kind) => (
           <button
@@ -73,22 +75,25 @@ export default function App() {
         ))}
       </div>
 
-      {/* Counter — now uses useFormDirty custom hook and getCounterMessage helper */}
+      {/* Counter — now uses useMemo for stats and useCallback for addTwoFixed */}
       <Counter />
 
-      {/* ShoppingList — also uses useFormDirty custom hook */}
+      {/* ShoppingList — now uses useMemo for filtered list */}
       <ShoppingList />
 
-      {/* Student Roster — StudentCard now uses StatusBadge shared component */}
+      {/* Student Roster — StudentCard now wrapped in React.memo */}
+      {/* handleSelectStudent wrapped in useCallback so memo works correctly */}
       <div style={{
         border: '1px solid #ccc',
         borderRadius: '8px',
         padding: '16px',
+        marginBottom: '24px',
       }}>
-        <h2>Student Roster — Reusable StatusBadge</h2>
+        <h2>Student Roster — React.memo + useCallback</h2>
         <p style={{ fontSize: '13px', color: '#888' }}>
-          The selected badge and featured badge are both instances of the
-          same StatusBadge component — same structure, different props.
+          Each StudentCard is wrapped in React.memo. handleSelectStudent
+          is wrapped in useCallback. Open the console — cards only log
+          "rendered" when their own props change.
         </p>
 
         {selectedStudent && (
@@ -116,6 +121,10 @@ export default function App() {
           />
         </StudentList>
       </div>
+
+      {/* NEW this week — PaginatedList fetches real data from PokeAPI */}
+      <PaginatedList />
+
     </main>
   );
 }
