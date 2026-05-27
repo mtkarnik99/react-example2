@@ -1,16 +1,31 @@
 // src/App.jsx
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useReducer } from 'react';
 import Counter from './components/features/Counter';
 import ShoppingList from './components/features/ShoppingList';
 import StudentCard from './components/roster/StudentCard';
 import StudentList from './components/roster/StudentList';
 import Dialog from './components/shared/Dialog';
 import PaginatedList from './components/features/PaginatedList';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
+import {
+  studentReducer,
+  initialState as studentInitialState,
+  studentActions,
+} from './reducers/studentReducer';
 
-export default function App() {
-  const [selectedStudent, setSelectedStudent] = useState(null);
-  const [dialogKind, setDialogKind] = useState('info');
-  const [showDialog, setShowDialog] = useState(true);
+// AppContent is separated from App so it can consume ThemeContext
+// useTheme() only works inside a component wrapped by ThemeProvider
+// if we called useTheme() directly in App, it would be outside the Provider
+function AppContent() {
+  const { theme, toggleTheme } = useTheme();
+
+  // useReducer replaces the selectedStudent useState from last week
+  // all student selection logic is now centralized in studentReducer
+  const [studentState, dispatch] = useReducer(
+    studentReducer,
+    studentInitialState
+  );
+  const { selectedStudent } = studentState;
 
   const students = [
     { id: 1, name: 'Ethan', grade: 'A' },
@@ -28,16 +43,13 @@ export default function App() {
     return () => console.log('App unmounted — cleanup ran');
   }, []);
 
-  // NEW this week — wrapped in useCallback
-  // StudentCard is now wrapped in React.memo
-  // memo skips re-renders when props haven't changed
-  // BUT if handleSelectStudent is a new reference every render,
-  // memo sees a changed prop and re-renders anyway
-  // useCallback keeps the reference stable — memo can do its job
+  // useCallback still wraps the handler — memo on StudentCard still needs
+  // a stable function reference to work correctly
   const handleSelectStudent = useCallback((name) => {
-    setSelectedStudent((prev) => prev === name ? null : name);
-    console.log('Handler called in App — selected:', name);
-  }, []); // no dependencies — setSelectedStudent is stable by default
+    // dispatch replaces the inline ternary setState from last week
+    dispatch({ type: studentActions.SELECT, name });
+    console.log('Dispatched SELECT action for:', name);
+  }, []);
 
   return (
     <main style={{
@@ -45,55 +57,56 @@ export default function App() {
       margin: '0 auto',
       padding: '24px',
       fontFamily: 'sans-serif',
+      // theme applied via context — controls the whole page
+      backgroundColor: theme === 'dark' ? '#1a252f' : '#f5f5f5',
+      minHeight: '100vh',
     }}>
-      <h1>React Fundamentals — Week 9</h1>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '24px',
+      }}>
+        <h1 style={{ color: theme === 'dark' ? '#fff' : '#2c3e50', margin: 0 }}>
+          React Fundamentals — Week 10
+        </h1>
 
-      {/* Dialog — unchanged from last week */}
-      {showDialog && (
-        <Dialog kind={dialogKind} onDismiss={() => setShowDialog(false)}>
-          <p>
-            This is a <strong>{dialogKind}</strong> dialog.
-          </p>
-        </Dialog>
-      )}
-
-      <div style={{ marginBottom: '24px' }}>
-        <p style={{ fontSize: '13px', color: '#888', marginBottom: '8px' }}>
-          Toggle the Dialog kind:
-        </p>
-        {['info', 'success', 'warning', 'error'].map((kind) => (
-          <button
-            key={kind}
-            onClick={() => {
-              setDialogKind(kind);
-              setShowDialog(true);
-            }}
-            style={{ marginRight: '8px' }}
-          >
-            {kind}
-          </button>
-        ))}
+        {/* theme toggle button — dispatches through context, not props */}
+        <button
+          onClick={toggleTheme}
+          style={{
+            padding: '8px 16px',
+            borderRadius: '4px',
+            border: 'none',
+            backgroundColor: theme === 'dark' ? '#fff' : '#2c3e50',
+            color: theme === 'dark' ? '#2c3e50' : '#fff',
+            cursor: 'pointer',
+          }}
+        >
+          {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+        </button>
       </div>
 
-      {/* Counter — now uses useMemo for stats and useCallback for addTwoFixed */}
+      {/* Counter — unchanged from last week */}
       <Counter />
 
-      {/* ShoppingList — now uses useMemo for filtered list */}
+      {/* ShoppingList — now uses useReducer and reads theme from context */}
       <ShoppingList />
 
-      {/* Student Roster — StudentCard now wrapped in React.memo */}
-      {/* handleSelectStudent wrapped in useCallback so memo works correctly */}
+      {/* Student Roster — useReducer manages selection, context provides theme */}
       <div style={{
         border: '1px solid #ccc',
         borderRadius: '8px',
         padding: '16px',
         marginBottom: '24px',
+        backgroundColor: theme === 'dark' ? '#2c3e50' : '#fff',
       }}>
-        <h2>Student Roster — React.memo + useCallback</h2>
-        <p style={{ fontSize: '13px', color: '#888' }}>
-          Each StudentCard is wrapped in React.memo. handleSelectStudent
-          is wrapped in useCallback. Open the console — cards only log
-          "rendered" when their own props change.
+        <h2 style={{ color: theme === 'dark' ? '#fff' : '#2c3e50' }}>
+          Student Roster — useReducer + useContext
+        </h2>
+        <p style={{ fontSize: '13px', color: theme === 'dark' ? '#aaa' : '#888' }}>
+          Selection state is managed by studentReducer via dispatch.
+          Theme is read from ThemeContext — no prop drilling needed.
         </p>
 
         {selectedStudent && (
@@ -102,8 +115,16 @@ export default function App() {
             backgroundColor: '#e8f5e9',
             borderRadius: '4px',
             marginBottom: '12px',
+            color: '#333',
           }}>
             Selected: <strong>{selectedStudent}</strong>
+            {/* dispatch DESELECT action to clear selection */}
+            <button
+              onClick={() => dispatch({ type: studentActions.DESELECT })}
+              style={{ marginLeft: '8px', fontSize: '12px' }}
+            >
+              Clear
+            </button>
           </p>
         )}
 
@@ -122,9 +143,20 @@ export default function App() {
         </StudentList>
       </div>
 
-      {/* NEW this week — PaginatedList fetches real data from PokeAPI */}
+      {/* PaginatedList — unchanged from last week */}
       <PaginatedList />
 
     </main>
+  );
+}
+
+// App wraps AppContent in ThemeProvider
+// ThemeProvider makes theme available to every component in the tree
+// without any props being passed
+export default function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   );
 }
