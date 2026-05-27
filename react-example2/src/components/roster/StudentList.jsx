@@ -1,18 +1,24 @@
 // src/components/roster/StudentList.jsx
 import StudentCard from './StudentCard';
+import { useTheme } from '../../context/ThemeContext';
 
-// onSelectStudent must be a stable reference for React.memo on StudentCard to work
-// if the function changes every render, memo sees a new prop and re-renders anyway
-// that's why App wraps handleSelectStudent in useCallback before passing it down
 function StudentList({ students, children, onSelectStudent, selectedStudent }) {
+  // consuming ThemeContext directly — no theme prop needed from App
+  // this is the prop drilling elimination in action
+  // last week App would have needed to pass theme down through every level
+  const { theme } = useTheme();
+
   return (
     <ul
       onClick={() => console.log('List clicked — bubbling demo')}
-      style={{ padding: 0 }}
+      style={{
+        padding: 0,
+        backgroundColor: theme === 'dark' ? '#34495e' : 'transparent',
+        borderRadius: '8px',
+      }}
     >
-      <p style={{ fontSize: '13px', color: '#888' }}>
-        Open the console — with React.memo, cards only log "rendered"
-        when their own props change, not on every App re-render.
+      <p style={{ fontSize: '13px', color: theme === 'dark' ? '#aaa' : '#888' }}>
+        StudentList reads theme directly from ThemeContext — no prop needed.
       </p>
 
       {children}
