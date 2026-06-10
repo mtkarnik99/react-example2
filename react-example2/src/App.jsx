@@ -1,7 +1,7 @@
 // src/App.jsx
 import { Routes, Route } from 'react-router';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
-import Navbar from './components/shared/Navbar';
+import Navbar from './components/shared/NavBar';
 
 // page components — each one maps to a route
 import Home from './pages/Home';
