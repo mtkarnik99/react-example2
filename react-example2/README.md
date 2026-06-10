@@ -1,4 +1,4 @@
-# React Fundamentals — Week 10
+# React Fundamentals
 
 A teaching project that walks through core React concepts through small, focused examples. Each route demonstrates a specific set of hooks and patterns, with inline comments explaining *why* each technique is used. Built with **React 19**, **Vite**, and **React Router 7**.
 
